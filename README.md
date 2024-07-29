@@ -10,9 +10,9 @@ ArXiv: https://arxiv.org/abs/2402.17641 \
 Blog: https://team-approx-bayes.github.io/blog/ivon/ \
 Tutorial: https://ysngshn.github.io/research/why-ivon/
 
-The JAX implementation of IVON is self-contained in the single file [ivon.py](./ivon.py). It makes use of compoments from the [optax](https://github.com/google-deepmind/optax) library.
+The JAX implementation of IVON is self-contained in a single file [ivon.py](./ivon.py). It makes use of components from the [optax](https://github.com/google-deepmind/optax) library and can be `jax.jit`-ted for maximum efficiency.
 
-We also provide [an official PyTorch implementation](https://github.com/team-approx-bayes/ivon) of the IVON optimizer.
+We also provide [an official PyTorch implementation](https://github.com/team-approx-bayes/ivon) of the IVON optimizer. Experiments in our paper are obtained with the PyTorch implementation and their source code can be found [here](https://github.com/team-approx-bayes/ivon-experiments).
 
 ## Quickstart
 
@@ -37,9 +37,9 @@ In Appendix A of our [paper](https://arxiv.org/abs/2402.17641), we provide pract
 
 ### Usage
 
-The `ivon.IVON` optimizer instance returned by the construction function `ivon.ivon()` has an `.init()` method for initializing the optimizer states and a `.step()` method to compute the gradient updates.
+Similar to the usual Optax interface, the `ivon.IVON` optimizer instance returned by the construction function `ivon.ivon()` has an `.init()` method for initializing the optimizer states and a `.step()` method to compute the gradient updates.
 
-This said, `ivon.IVON` provides two additional methods to support its stochastic variational inference updates: `.sampled_params()` to draw a weight posterior sample and additionally return its generated noise, which will be used by the `.accumulate()` method to estimate and accumulate the expected gradient and Hessian for the current step.
+Additionally, `ivon.IVON` provides two methods to support its stochastic variational inference updates: `.sampled_params()` to draw a weight posterior sample and additionally return its generated noise, which will be used by the `.accumulate()` method to estimate and accumulate the expected gradient and Hessian for the current step.
 
 In general, a typical training step could be carried out as follows:
 
@@ -81,7 +81,7 @@ Go to the [resnet-cifar](./resnet-cifar) folder, run the following commands:
 ```
 python train.py --alpha 0.03 --beta1 0.9 --priorprec 25 --optim sgd --dataset cifar10
 ```
-This should train to around ~94.8% test-accuracy. 
+This should train to around ~94.8% test accuracy. 
 
 **IVON**
 ```
