@@ -20,7 +20,7 @@ We also provide [an official PyTorch implementation](https://github.com/team-app
 
 IVON optimizer can be defined via `ivon.ivon()` and initialized with its `.init()` method.
 
-```
+```python
 optimizer = ivon(
         lr, 
         ess, 
@@ -43,7 +43,7 @@ Additionally, `ivon.IVON` provides two methods to support its stochastic variati
 
 In general, a typical training step could be carried out as follows:
 
-```
+```python
 train_mcsamples = 1  # 1 sample is good enough, more even better
 rngkey, *mc_keys = jax.random.split(rngkey, train_mcsamples+1)
 # Stochastic natural gradient VI with IVON
