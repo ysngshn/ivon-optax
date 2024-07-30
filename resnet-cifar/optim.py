@@ -67,7 +67,7 @@ def build_ivon_optimizer(
 ):
     optimizer = ivon.ivon(
         learningrate, ess, hess_init, beta1, beta2, wdecay, clip_radius,
-        rescale_lr, every_k, axis_name)
+        rescale_lr, axis_name)
 
     def init(weightinit, netstate, rngkey):
         optstate = optimizer.init(weightinit)
@@ -86,7 +86,7 @@ def build_ivon_optimizer(
         (
             params, ivonoptstate
         ) = optstate['w'], optstate['state']
-        n_samples = optimizer.every_k
+        n_samples = every_k
         keys = jrandom.split(trainstate.rngkey, n_samples+1)
         rngkey = keys[0]
         grad, loss = None, 0.0

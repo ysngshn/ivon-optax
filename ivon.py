@@ -34,7 +34,6 @@ class IVONState(NamedTuple):
 
 class IVON(NamedTuple):
     grad_transform: optax.GradientTransformation
-    every_k: int = 1
 
     @partial(jax.jit, static_argnums=(0,))
     def init(self, params: optax.Params) -> optax.OptState:
@@ -139,8 +138,8 @@ def _avg_grad_hess(grad_acc, nxg_acc, acc_count, axis_name):
     avg_grad = jtree.map(lambda g: g / acc_count, grad_acc)
     avg_nxg = jtree.map(lambda h: h / acc_count, nxg_acc)
     if axis_name is not None:
-        avg_grad = lax.psum(avg_grad, axis_name=axis_name)
-        avg_nxg = lax.psum(avg_nxg, axis_name=axis_name)
+        avg_grad = lax.pmean(avg_grad, axis_name=axis_name)
+        avg_nxg = lax.pmean(avg_nxg, axis_name=axis_name)
     return avg_grad, avg_nxg
 
 
@@ -212,10 +211,8 @@ def ivon(
     weight_decay: float = 1e-4,
     clip_radius: float = float("inf"),
     rescale_lr: bool = True,
-    every_k: int = 1,
     axis_name: Optional[str] = None,
 ) -> IVON:
-    assert every_k >= 1
     ivon_transform = scale_by_ivon(
         ess, hess_init, beta1, beta2, weight_decay, axis_name
     )
@@ -235,4 +232,4 @@ def ivon(
         )
     else:
         transform = optax.chain(ivon_transform, *lr_scale)
-    return IVON(transform, every_k)
+    return IVON(transform)
