@@ -33,7 +33,7 @@ optimizer = ivon(
 optstate = optimizer.init(params)
 ```
 
-In Appendix A of our [paper](https://arxiv.org/abs/2402.17641), we provide practical guidelines for choosing IVON hyperparameters.
+Appendix A of our [paper](https://arxiv.org/abs/2402.17641) provides practical guidelines for choosing IVON hyperparameters.
 
 ### Usage
 
@@ -50,10 +50,10 @@ rngkey, *mc_keys = jax.random.split(rngkey, train_mcsamples+1)
 for key in mc_keys:
     # draw IVON weight posterior sample
     psample, noise = optimizer.sampled_params(
-        skey, params, optstate
+        key, params, optstate
     )
-    # get gradient for this MC sample from forward-backward
-    mc_updates = ...
+    # get gradient for this MC sample from feed-forward + backprop
+    mc_updates = ff_backprop(psample, inputs, target, ...)
     # accumulate for current sample
     optstate = optimizer.accumulate(mc_updates, optstate, noise)
 # compute updates with accumulated estimations
@@ -67,11 +67,11 @@ Simply copy the `ivon.py` file to your project folder and import it.
 
 This file only depends on [`jax`](https://jax.readthedocs.io/en/latest/installation.html) and [`optax`](https://optax.readthedocs.io/en/latest/index.html#installation). Visit their docs to see how they should be installed.
 
-We also provide an example which has additional dependencies, see below.
+We also provide an example that has additional dependencies, see below.
 
 ## Example: Training ResNet-18 on CIFAR-10
 
-The folder [resnet-cifar](./resnet-cifar) contains an example showing how the IVON optimizer can be used to tackle image classification tasks. This code base is adapted from the [Bayesian-SAM repo](https://github.com/team-approx-bayes/bayesian-sam) with permission from the author. Check out its package dependencies [here](./resnet-cifar/requirements.txt).
+The folder [resnet-cifar](./resnet-cifar) contains an example showing how the IVON optimizer can tackle image classification tasks. This code base is adapted from the [Bayesian-SAM repo](https://github.com/team-approx-bayes/bayesian-sam) with permission from the author. Check out its package dependencies [here](./resnet-cifar/requirements.txt).
 
 ### Run training
 
@@ -81,13 +81,13 @@ Go to the [resnet-cifar](./resnet-cifar) folder, run the following commands:
 ```
 python train.py --alpha 0.03 --beta1 0.9 --priorprec 25 --optim sgd --dataset cifar10
 ```
-This should train to around ~94.8% test accuracy. 
+This should train to around 94.8% test accuracy. 
 
 **IVON**
 ```
 python train.py --alpha 0.5 --beta1 0.9 --beta2 0.99999 --priorprec 25 --optim ivon --hess-init 0.5 --dataset cifar10
 ```
-This should train to around ~95.2% test-accuracy. 
+This should train to around 95.2% test accuracy. 
 
 ### Run test
 
