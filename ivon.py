@@ -134,14 +134,13 @@ def _update_grad(params, hess, momentum, wd, debias):
 
 
 def ivon_update(
-        updates: optax.Updates | None,
+        updates: optax.Updates,
         state: optax.OptState,
         params: optax.Params | None = None,
 ) -> tuple[optax.Updates, IVONState]:
     if params is None:
         raise ValueError("IVON update requires the `params` argument.")
-    if updates is not None:
-        state, = accumulate_gradients(updates, (state,))
+    state, = accumulate_gradients(updates, (state,))
     (
         ess, beta1, beta2, weight_decay, momentum, hess, axis_name,
         current_step, grad_acc, nxg_acc, _, acc_count
