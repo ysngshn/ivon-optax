@@ -2,7 +2,6 @@ import argparse
 import os
 import pickle
 import sys
-from tqdm import tqdm
 import numpy as np
 import torch
 import jax
@@ -83,9 +82,10 @@ def main():
     total = 0
 
     print('testing...')
+    sampled_params = ivon.IVON.sampled_params
     keys = None
     batch_idx = -1
-    for batch_idx, (inputs, targets) in enumerate(tqdm(testloader)):
+    for batch_idx, (inputs, targets) in enumerate(testloader):
         dat = jnp.array(inputs.numpy().transpose(0, 2, 3, 1))
         tgt = jax.nn.one_hot(targets.numpy(), nclasses)
 
@@ -106,7 +106,7 @@ def main():
             rngkey, keys = keys[0], keys[1:]
         for i in range(args.testmc):
             if trainargs.optim == 'ivon':
-                theta_sampled, _ = ivon.sample_parameters(
+                theta_sampled, _ = sampled_params(
                     keys[i],
                     trainstate.optstate['w'],
                     trainstate.optstate['state']

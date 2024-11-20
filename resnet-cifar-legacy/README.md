@@ -10,13 +10,9 @@ ArXiv: https://arxiv.org/abs/2402.17641 \
 Blog: https://team-approx-bayes.github.io/blog/ivon/ \
 Tutorial: https://ysngshn.github.io/research/why-ivon/
 
+The JAX implementation of IVON is self-contained in a single file [ivon.py](./ivon.py). It makes use of components from the [optax](https://github.com/google-deepmind/optax) library and can be `jax.jit`-ted for maximum efficiency.
+
 We also provide [an official PyTorch implementation](https://github.com/team-approx-bayes/ivon) of the IVON optimizer. Experiments in our paper are obtained with the PyTorch implementation and their source code can be found [here](https://github.com/team-approx-bayes/ivon-experiments).
-
-The JAX implementation of IVON is self-contained in a single file [ivon.py](./ivon.py). The main optimizer `ivon.ivon(...)` is implemented as an [Optax](https://github.com/google-deepmind/optax) optimizer (alias of type `optax.GradientTransform`). Also, two functions `ivon.sample_parameters` and `ivon.accumulate_gradients` are provided to obtain posterior samples and accumulate intermediate results in case of multi-sample training, respectively.  
-
-Special thanks to [Emanuel Sommer](https://github.com/EmanuelSommer) for raising the concern about the Optax/Flax compatibility issue! The older legacy version with the same functionalities but different API can be found in the folder [resnet-cifar-legacy](./resnet-cifar-legacy) together with its CIFAR-10 training example.
-
-
 
 ## Quickstart
 
@@ -41,31 +37,27 @@ Appendix A of our [paper](https://arxiv.org/abs/2402.17641) provides practical g
 
 ### Usage
 
-IVON requests gradients evaluated at posterior samples, thus it should always 
-be used in combination with `ivon.sample_parameters`. 
+Similar to the usual Optax interface, the `ivon.IVON` optimizer instance returned by the construction function `ivon.ivon()` has an `.init()` method for initializing the optimizer states and a `.step()` method to compute the gradient updates.
 
-Additionally, IVON supports multi-sample training for more accurate ELBO loss 
-estimation and better training results. This is optional and the function 
-`ivon.accumulate_gradients` should be used to collect the intermediate results 
-before the final `.update()` call.
+Additionally, `ivon.IVON` provides two methods to support its stochastic variational inference updates: `.sampled_params()` to draw a weight posterior sample and additionally return its generated noise, which will be used by the `.accumulate()` method to estimate and accumulate the expected gradient and Hessian for the current step.
 
 In general, a typical training step could be carried out as follows:
 
 ```python
 train_mcsamples = 1  # 1 sample is good enough, more even better
-rngkey, *mc_keys = jax.random.split(rngkey, train_mcsamples + 1)
+rngkey, *mc_keys = jax.random.split(rngkey, train_mcsamples+1)
 # Stochastic natural gradient VI with IVON
-for i, key in enumerate(mc_keys):
+for key in mc_keys:
     # draw IVON weight posterior sample
-    psample, optstate = ivon.sample_parameters(key, params, optstate)
+    psample, noise = optimizer.sampled_params(
+        key, params, optstate
+    )
     # get gradient for this MC sample from feed-forward + backprop
-    updates = ff_backprop(psample, inputs, target, ...)
-    if i == train_mcsamples - 1:  # last step
-        # compute IVON updates
-        updates, optstate = optimizer.update(updates, optstate, params)
-    else:  # intermediate steps
-        # accumulate for current sample
-        optstate = ivon.accumulate_gradients(updates, optstate)
+    mc_updates = ff_backprop(psample, inputs, target, ...)
+    # accumulate for current sample
+    optstate = optimizer.accumulate(mc_updates, optstate, noise)
+# compute updates with accumulated estimations
+updates, optstate = optimizer.step(optstate, params)
 params = optax.apply_updates(params, updates)
 ```
 
@@ -74,8 +66,6 @@ params = optax.apply_updates(params, updates)
 Simply copy the `ivon.py` file to your project folder and import it.
 
 This file only depends on [`jax`](https://jax.readthedocs.io/en/latest/installation.html) and [`optax`](https://optax.readthedocs.io/en/latest/index.html#installation). Visit their docs to see how they should be installed.
-
-For people working with [`flax`](https://flax.readthedocs.io/en/latest/index.html), we have [a simple Flax usage example adapted from their official documentation](./example_optax_flax.py). 
 
 We also provide an example that has additional dependencies, see below.
 
@@ -105,12 +95,12 @@ In [resnet-cifar](./resnet-cifar) run the following commands. Adapt `--resultsfo
 
 **SGD**
 ```
-python test.py --resultsfolder results/cifar10_resnet18/sgd/run_0/
+python test.py --resultsfolder /results/cifar10_resnet18/sgd/run_0/
 ```
 
 **IVON**
 ```
-python test.py --resultsfolder results/cifar10_resnet18/ivon/run_0/ --testmc 64
+python test.py --resultsfolder /results/cifar10_resnet18/ivon/run_0/ --testmc 64
 ```
 
 Tests should show that IVON with 64-sample Bayesian prediction gets significantly better uncertainty metrics.

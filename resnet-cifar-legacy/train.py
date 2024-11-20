@@ -8,6 +8,7 @@ import torch
 from tqdm import trange
 import jax
 import jax.numpy as jnp
+from jax.nn import logsumexp, log_softmax
 from data import dataloader
 from models import get_model
 from util import tprint, nll_categorical
@@ -147,10 +148,12 @@ def main():
     # prepare optimizer
     rngkey, initkey = jax.random.split(rngkey)
     if args.optim == 'ivon':
-        optinit, optstep = get_optimizer(
+        optinit, optstep, sampled_params = get_optimizer(
             args, ndata, modelapply)
     else:
+        # optinit, optstep = get_optimizer(args, ndata, jax.jit(modelapply))
         optinit, optstep = get_optimizer(args, ndata, modelapply)
+        sampled_params = NotImplemented
 
     def train_epoch(trainstate, lrfactor): 
         losses = []

@@ -90,17 +90,14 @@ def build_ivon_optimizer(
         keys = jrandom.split(trainstate.rngkey, n_samples+1)
         rngkey = keys[0]
         grad, loss = None, 0.0
-        for i, skey in enumerate(keys[1:]):
-            psample, ivonoptstate = ivon.sample_parameters(
-                skey, params, ivonoptstate)
+        for skey in keys[1:]:
+            psample, noise = optimizer.sampled_params(
+                skey, params, ivonoptstate
+            )
             (loss, netstate), grad = lossgrad(
                 psample, trainstate.netstate, minibatch, is_training=True)
-            if i == n_samples - 1:  # last step
-                grad, ivonoptstate = optimizer.update(
-                    grad, ivonoptstate, params)
-            else:
-                ivonoptstate = ivon.accumulate_gradients(grad, ivonoptstate)
-
+            ivonoptstate = optimizer.accumulate(grad, ivonoptstate, noise)
+        grad, ivonoptstate = optimizer.step(ivonoptstate, params)
         grad = jax.tree_map(lambda g: lrfactor * g, grad)
         params = optax.apply_updates(params, grad)
         optstate = {
@@ -116,4 +113,4 @@ def build_ivon_optimizer(
 
         return newtrainstate, loss
 
-    return init, step
+    return init, step, optimizer.sampled_params

@@ -1,0 +1,7 @@
+numpy>=1.19.2
+tqdm>=4.62.3
+torch>=1.13.1
+torchvision>=0.14.1
+jax
+optax
+dm-haiku
