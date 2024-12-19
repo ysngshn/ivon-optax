@@ -14,7 +14,11 @@ We also provide [an official PyTorch implementation](https://github.com/team-app
 
 The JAX implementation of IVON is self-contained in a single file [ivon.py](./ivon.py). The main optimizer `ivon.ivon(...)` is implemented as an [Optax](https://github.com/google-deepmind/optax) optimizer (alias of type `optax.GradientTransform`). Also, two functions `ivon.sample_parameters` and `ivon.accumulate_gradients` are provided to obtain posterior samples and accumulate intermediate results in case of multi-sample training, respectively.  
 
-Special thanks to [Emanuel Sommer](https://github.com/EmanuelSommer) for raising the concern about the Optax/Flax compatibility issue! The older legacy version with the same functionalities but different API can be found in the folder [resnet-cifar-legacy](./resnet-cifar-legacy) together with its CIFAR-10 training example.
+Special thanks to 
+- Marco Miani for pointing out some bugs in the implementation.
+- [Emanuel Sommer](https://github.com/EmanuelSommer) for raising the concern about the Optax/Flax compatibility issue.
+
+The older legacy version with the same functionalities but different API can be found in the folder [resnet-cifar-legacy](./resnet-cifar-legacy) together with its CIFAR-10 training example.
 
 
 

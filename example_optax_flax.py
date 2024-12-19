@@ -9,7 +9,7 @@ import ivon
 
 
 def loss_fn(params, x, y):
-    predictions = state.apply_fn({'params': params}, x)
+    predictions = state.apply_fn({"params": params}, x)
     loss = optax.l2_loss(predictions=predictions, targets=y).mean()
     return loss
 
@@ -21,18 +21,18 @@ if __name__ == "__main__":
     y = jnp.ones((1, 2))
     model = nn.Dense(2)
     variables = model.init(jax.random.key(0), x)
-    params = variables['params']
+    params = variables["params"]
     tx = ivon.ivon(
         learning_rate=1.0,
         ess=1,
     )
-    state = TrainState.create(
-        apply_fn=model.apply,
-        params=params,
-        tx=tx)
+    state = TrainState.create(apply_fn=model.apply, params=params, tx=tx)
 
     print("Before training step:")
-    print(f"loss evaluated at Gaussian posterior mean: {loss_fn(state.params, x, y)}\n")
+    print(
+        f"loss evaluated at Gaussian posterior mean: "
+        f"{loss_fn(state.params, x, y)}\n"
+    )
 
     for i in range(mc_samples):
         key, skey = jax.random.split(key)
@@ -40,7 +40,10 @@ if __name__ == "__main__":
             skey, state.params, state.opt_state
         )
         print(f"MC sample iteration {i}:")
-        print(f"loss evaluated with Gaussian posterior sample: {loss_fn(param_sample, x, y)}\n")
+        print(
+            f"loss evaluated with Gaussian posterior sample: "
+            f"{loss_fn(param_sample, x, y)}\n"
+        )
         grads = jax.grad(loss_fn)(param_sample, x, y)
         if i == mc_samples - 1:
             state = state.replace(opt_state=opt_state)
@@ -50,7 +53,10 @@ if __name__ == "__main__":
             state = state.replace(opt_state=opt_state)
 
     print("After training step:")
-    print(f"loss evaluated at Gaussian posterior mean: {loss_fn(state.params, x, y)}")
+    print(
+        f"loss evaluated at Gaussian posterior mean: "
+        f"{loss_fn(state.params, x, y)}"
+    )
 
 
 # Expected output:
@@ -68,4 +74,4 @@ if __name__ == "__main__":
 # loss evaluated with Gaussian posterior sample: 3.8970746994018555
 #
 # After training step:
-# loss evaluated at Gaussian posterior mean: 1.5659505128860474
+# loss evaluated at Gaussian posterior mean: 0.8151085376739502
